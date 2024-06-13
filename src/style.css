@@ -3,3 +3,40 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.svg-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: auto;
+}
+
+#tooltip {
+  position: absolute;
+  display: none;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 5px;
+}
+
+@media (min-width: 1000px) {
+  .svg-content {
+    width: 80%;
+  }
+}
