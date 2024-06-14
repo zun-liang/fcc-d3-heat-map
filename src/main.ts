@@ -1,2 +1,155 @@
-import './style.css'
+import "./style.css";
+import * as d3 from "d3";
+import { Margin, TempData, Data } from "./types";
 
+const width: number = 1000;
+const height: number = 500;
+const margin: Margin = { top: 80, left: 70, right: 70, bottom: 80 };
+
+fetch(
+  "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json"
+)
+  .then((res: Response) => res.json() as Promise<Data>)
+  .then((data) => {
+    const baseTemp: number = data.baseTemperature;
+    const tempData: TempData[] = data.monthlyVariance;
+
+    const xScale = d3
+      .scaleBand()
+      .domain(tempData.map((d) => d.year.toString()))
+      .range([margin.left, width - margin.left]);
+
+    const yScale = d3
+      .scaleBand()
+      .domain(tempData.map((d) => d.month.toString()))
+      .range([margin.top, height - margin.bottom]);
+
+    const colorScale = d3
+      .scaleLinear<string>()
+      .domain([
+        d3.min(tempData, (d) => baseTemp + d.variance)!,
+        d3.max(tempData, (d) => baseTemp + d.variance)!,
+      ])
+      .range(["#323695", "#A60026"]);
+
+    const svg = d3
+      .select("div#app")
+      .append("svg")
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .classed("svg-content", true);
+
+    svg
+      .append("text")
+      .attr("id", "title")
+      .attr("x", width / 2)
+      .attr("y", 30)
+      .attr("text-anchor", "middle")
+      .style("fill", "black")
+      .style("font-size", "30px")
+      .text("Monthly Global Land-Surface Temperature");
+
+    svg
+      .append("text")
+      .attr("id", "description")
+      .attr("x", width / 2)
+      .attr("y", 60)
+      .attr("text-anchor", "middle")
+      .style("font-size", "20px")
+      .style("fill", "black")
+      .text("1753 - 2015: base temperature 8.66℃");
+    const tooltip = d3.select("body").append("div").attr("id", "tooltip");
+    const xAxisTicks = tempData
+      .filter((d) => d.year % 10 === 0)
+      .map((d) => d.year.toString());
+
+    svg
+      .append("g")
+      .attr("id", "x-axis")
+      .attr("transform", `translate(0, ${height - margin.bottom})`)
+      .call(d3.axisBottom(xScale).tickValues(xAxisTicks));
+
+    svg
+      .append("g")
+      .attr("id", "y-axis")
+      .attr("transform", `translate(${margin.left}, 0)`)
+      .call(d3.axisLeft(yScale));
+
+    svg
+      .selectAll("rect")
+      .data(tempData)
+      .enter()
+      .append("rect")
+      .attr("class", "cell")
+      .attr("x", (d) => xScale(d.year.toString())!)
+      .attr("y", (d) => yScale(d.month.toString())!)
+      .attr("data-year", (d) => d.year)
+      .attr("data-month", (d) => d.month)
+      .attr("width", xScale.bandwidth())
+      .attr("height", yScale.bandwidth())
+      .style("fill", (d) => colorScale(baseTemp + d.variance))
+      .on("mouseover", (event, d) => {
+        tooltip
+          .style("display", "block")
+          .html(
+            `${d.year} - ${d.month}<br/>${(baseTemp + d.variance).toFixed(
+              2
+            )}<br/>${d.variance.toFixed(2)}`
+          )
+          .attr("data-year", d.year)
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`);
+      })
+      .on("mouseout", () => tooltip.style("display", "none"));
+
+    svg
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", height - 40)
+      .text("Years")
+      .style("font-size", "10px");
+
+    svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", 40)
+      .text("Months")
+      .style("font-size", "10px");
+
+    const legendWidth = 400;
+    const legendHeight = 20;
+    const legendX = width - legendWidth - margin.right;
+    const legendY = height - margin.bottom / 2;
+
+    const legend = svg
+      .append("g")
+      .attr("id", "legend")
+      .attr("transform", `translate(${legendX}, ${legendY})`);
+
+    const legendScale = d3
+      .scaleLinear()
+      .domain(colorScale.domain())
+      .range([0, legendWidth])
+      .nice();
+
+    const legendAxis = d3
+      .axisBottom(legendScale)
+      .ticks(5)
+      .tickFormat((d) => `${d.toFixed(1)}℃`);
+
+    legend
+      .selectAll("rect")
+      .data(d3.range(legendWidth))
+      .enter()
+      .append("rect")
+      .attr("x", (d) => d)
+      .attr("y", 0)
+      .attr("width", 1)
+      .attr("height", legendHeight)
+      .attr("fill", d => colorScale(legendScale.invert(d)));
+    
+    legend
+      .append("g")
+      .attr("transform", `translate(0, ${legendHeight})`)
+      .call(legendAxis);
+  });
