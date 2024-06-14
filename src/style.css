@@ -33,10 +33,5 @@ body {
   color: white;
   padding: 15px 20px;
   border-radius: 5px;
-}
-
-@media (min-width: 1000px) {
-  .svg-content {
-    width: 80%;
-  }
+  text-align: center;
 }
