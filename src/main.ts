@@ -25,12 +25,11 @@ fetch(
       .range([margin.top, height - margin.bottom]);
 
     const colorScale = d3
-      .scaleLinear<string>()
+      .scaleSequential(d3.interpolateRdYlBu)
       .domain([
-        d3.min(tempData, (d) => baseTemp + d.variance)!,
         d3.max(tempData, (d) => baseTemp + d.variance)!,
-      ])
-      .range(["#323695", "#A60026"]);
+        d3.min(tempData, (d) => baseTemp + d.variance)!,
+      ]);
 
     const svg = d3
       .select("div#app")
@@ -57,7 +56,9 @@ fetch(
       .style("font-size", "20px")
       .style("fill", "black")
       .text("1753 - 2015: base temperature 8.66℃");
+
     const tooltip = d3.select("body").append("div").attr("id", "tooltip");
+
     const xAxisTicks = tempData
       .filter((d) => d.year % 10 === 0)
       .map((d) => d.year.toString());
@@ -84,6 +85,7 @@ fetch(
       .attr("y", (d) => yScale(d.month.toString())!)
       .attr("data-year", (d) => d.year)
       .attr("data-month", (d) => d.month)
+      .attr("data-temp", (d) => d.variance + baseTemp)
       .attr("width", xScale.bandwidth())
       .attr("height", yScale.bandwidth())
       .style("fill", (d) => colorScale(baseTemp + d.variance))
@@ -91,9 +93,33 @@ fetch(
         tooltip
           .style("display", "block")
           .html(
-            `${d.year} - ${d.month}<br/>${(baseTemp + d.variance).toFixed(
+            `${d.year} - ${
+              d.month === 1
+                ? "January"
+                : d.month === 2
+                ? "February"
+                : d.month === 3
+                ? "March"
+                : d.month === 4
+                ? "April"
+                : d.month === 5
+                ? "May"
+                : d.month === 6
+                ? "June"
+                : d.month === 7
+                ? "July"
+                : d.month === 8
+                ? "August"
+                : d.month === 9
+                ? "September"
+                : d.month === 10
+                ? "October"
+                : d.month === 11
+                ? "November"
+                : "December"
+            }<br/>${(baseTemp + d.variance).toFixed(
               2
-            )}<br/>${d.variance.toFixed(2)}`
+            )}℃<br/>${d.variance.toFixed(2)}℃`
           )
           .attr("data-year", d.year)
           .style("left", `${event.pageX + 10}px`)
@@ -116,7 +142,7 @@ fetch(
       .text("Months")
       .style("font-size", "10px");
 
-    const legendWidth = 400;
+    const legendWidth = 200;
     const legendHeight = 20;
     const legendX = width - legendWidth - margin.right;
     const legendY = height - margin.bottom / 2;
@@ -128,14 +154,14 @@ fetch(
 
     const legendScale = d3
       .scaleLinear()
-      .domain(colorScale.domain())
+      .domain(colorScale.domain().reverse())
       .range([0, legendWidth])
       .nice();
 
     const legendAxis = d3
       .axisBottom(legendScale)
       .ticks(5)
-      .tickFormat((d) => `${d.toFixed(1)}℃`);
+      .tickFormat((d) => d.valueOf().toFixed(1));
 
     legend
       .selectAll("rect")
@@ -146,8 +172,8 @@ fetch(
       .attr("y", 0)
       .attr("width", 1)
       .attr("height", legendHeight)
-      .attr("fill", d => colorScale(legendScale.invert(d)));
-    
+      .attr("fill", (d) => colorScale(legendScale.invert(d)));
+
     legend
       .append("g")
       .attr("transform", `translate(0, ${legendHeight})`)
