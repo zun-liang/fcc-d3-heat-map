@@ -17,7 +17,8 @@ fetch(
     const xScale = d3
       .scaleBand()
       .domain(tempData.map((d) => d.year.toString()))
-      .range([margin.left, width - margin.right]);
+      .range([margin.left, width - margin.right])
+      .padding(0.05);
 
     const yScale = d3
       .scaleBand()
@@ -59,10 +60,6 @@ fetch(
 
     const tooltip = d3.select("body").append("div").attr("id", "tooltip");
 
-    const xAxisTicks = tempData
-      .filter((d) => d.year % 10 === 0)
-      .map((d) => d.year.toString());
-
     const yAxisTicks = [
       "January",
       "February",
@@ -82,7 +79,11 @@ fetch(
       .append("g")
       .attr("id", "x-axis")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
-      .call(d3.axisBottom(xScale).tickValues(xAxisTicks))
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickValues(xScale.domain().filter((year) => Number(year) % 10 === 0))
+      )
       .style("font-size", "8px");
 
     svg
@@ -145,7 +146,7 @@ fetch(
           .style("left", `${event.pageX - 50}px`)
           .style("top", `${event.pageY + 30}px`);
       })
-      .on("mouseout", (event, d) => {
+      .on("mouseout", (event) => {
         d3.select(event.currentTarget).style("stroke", "none");
         tooltip.style("display", "none");
       });
