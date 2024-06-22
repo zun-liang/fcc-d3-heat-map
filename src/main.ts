@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { Margin, TempData, Data } from "./types";
 
 const width: number = 1000;
-const height: number = 500;
+const height: number = 400;
 const margin: Margin = { top: 80, left: 70, right: 70, bottom: 80 };
 
 fetch(
@@ -17,11 +17,11 @@ fetch(
     const xScale = d3
       .scaleBand()
       .domain(tempData.map((d) => d.year.toString()))
-      .range([margin.left, width - margin.left]);
+      .range([margin.left, width - margin.right]);
 
     const yScale = d3
       .scaleBand()
-      .domain(tempData.map((d) => d.month.toString()))
+      .domain(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"])
       .range([margin.top, height - margin.bottom]);
 
     const colorScale = d3
@@ -63,17 +63,34 @@ fetch(
       .filter((d) => d.year % 10 === 0)
       .map((d) => d.year.toString());
 
+    const yAxisTicks = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
     svg
       .append("g")
       .attr("id", "x-axis")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
-      .call(d3.axisBottom(xScale).tickValues(xAxisTicks));
+      .call(d3.axisBottom(xScale).tickValues(xAxisTicks))
+      .style("font-size", "8px");
 
     svg
       .append("g")
       .attr("id", "y-axis")
       .attr("transform", `translate(${margin.left}, 0)`)
-      .call(d3.axisLeft(yScale));
+      .call(d3.axisLeft(yScale).tickFormat((d, i) => yAxisTicks[i]))
+      .style("font-size", "8px");
 
     svg
       .selectAll("rect")
@@ -84,12 +101,15 @@ fetch(
       .attr("x", (d) => xScale(d.year.toString())!)
       .attr("y", (d) => yScale(d.month.toString())!)
       .attr("data-year", (d) => d.year)
-      .attr("data-month", (d) => d.month)
+      .attr("data-month", (d) => d.month - 1)
       .attr("data-temp", (d) => d.variance + baseTemp)
       .attr("width", xScale.bandwidth())
       .attr("height", yScale.bandwidth())
       .style("fill", (d) => colorScale(baseTemp + d.variance))
       .on("mouseover", (event, d) => {
+        d3.select(event.currentTarget)
+          .style("stroke", "black")
+          .style("stroke-width", 1);
         tooltip
           .style("display", "block")
           .html(
@@ -122,10 +142,13 @@ fetch(
             )}℃<br/>${d.variance.toFixed(2)}℃`
           )
           .attr("data-year", d.year)
-          .style("left", `${event.pageX + 10}px`)
-          .style("top", `${event.pageY + 10}px`);
+          .style("left", `${event.pageX - 50}px`)
+          .style("top", `${event.pageY + 30}px`);
       })
-      .on("mouseout", () => tooltip.style("display", "none"));
+      .on("mouseout", (event, d) => {
+        d3.select(event.currentTarget).style("stroke", "none");
+        tooltip.style("display", "none");
+      });
 
     svg
       .append("text")
@@ -138,7 +161,7 @@ fetch(
       .append("text")
       .attr("transform", "rotate(-90)")
       .attr("x", -height / 2)
-      .attr("y", 40)
+      .attr("y", 25)
       .text("Months")
       .style("font-size", "10px");
 
