@@ -90,7 +90,7 @@ fetch(
       .append("g")
       .attr("id", "y-axis")
       .attr("transform", `translate(${margin.left}, 0)`)
-      .call(d3.axisLeft(yScale).tickFormat((d, i) => yAxisTicks[i]))
+      .call(d3.axisLeft(yScale).tickFormat((_, i) => yAxisTicks[i]))
       .style("font-size", "8px");
 
     svg
