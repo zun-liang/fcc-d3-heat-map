@@ -54,6 +54,7 @@ Users should be able to:
 - Band scales
 - Sequential Scales
 - Object.prototype.valueOf()
+- Use underscore ("_") to indicate intentionally unused
 
 ### Helpful Resources
 
